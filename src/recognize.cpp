@@ -13,5 +13,5 @@ int main(int argc, char ** argv) {
     afis::read_minutiae_coordinates(minutiae_a, "../digital/automatic/" + std::string(argv[1]) + ".txt");
     afis::read_minutiae_coordinates(minutiae_b, "../digital/automatic/" + std::string(argv[2]) + ".txt");
 
-    afis::match(minutiae_a, minutiae_b);
+    std::cout << afis::match(minutiae_a, minutiae_b) << std::endl;
 }
