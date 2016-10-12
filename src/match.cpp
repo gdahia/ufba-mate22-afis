@@ -2,6 +2,10 @@
 #include <limits>
 #include <algorithm>
 
+#ifndef MAX_DIST
+#define MAX_DIST 64
+#endif
+
 struct Translator_Rotator {
     const double rot_cos, rot_sin;
     const cv::Point center, translation;
@@ -14,42 +18,32 @@ struct Translator_Rotator {
     }
 };
 
-template<typename T>
-bool vfind(const std::vector<cv::Point_<T>> & v, const cv::Point_<T> & q) {
-    for (const cv::Point_<T> & p : v)
-        if (p == q) return true;
-    return false;
-}
-
 template<typename QueryType, typename LookupType>
-std::pair<bool, cv::Point_<LookupType>> find_best_match(const cv::Point_<QueryType> qry, const std::vector<cv::Point_<LookupType>> & lookup, const std::vector<cv::Point_<LookupType>> & disc) {
+int find_best_match(const cv::Point_<QueryType> qry, const std::vector<cv::Point_<LookupType>> & lookup, bool * marked) {
     if (lookup.empty()) {
         std::cerr << "Erro: vetor de pontos vazio" << std::endl;
         exit(1);
     }
 
-    bool ret = false;
-    double min_dist = std::numeric_limits<double>::max();
-    cv::Point_<LookupType> best_point(0, 0);
+    int ret = -1;
+    double min_dist = MAX_DIST;
 
     /* find first usable closest point */
-    for (cv::Point_<LookupType> p : lookup) {
-        if (!vfind<LookupType>(disc, p)) {
-            double dist = std::hypot((double) p.x - qry.x, (double) p.y - qry.y);
+    for (int i = 0, len = lookup.size(); i < len; i++) {
+        if (!marked[i]) {
+            double dist = pow(std::hypot((double) lookup[i].x - qry.x, (double) lookup[i].y - qry.y), 2.0);
             if (dist < min_dist) {
-                ret = true;
-                best_point = p;
                 min_dist = dist;
+                ret = i;
             }
         }
     }
 
-    return std::make_pair(ret, best_point);
+    return ret;
 }
 
 /* computes the most similar possible match assuming idx_b matches idx_a */
-double find_similarity(const int idx_a1, const int idx_a2, const int idx_b1, const int idx_b2, const std::vector<cv::Point> & minutiae_a, const std::vector<cv::Point> & minutiae_b) {
-
+int find_similarity(const int idx_a1, const int idx_a2, const int idx_b1, const int idx_b2, const std::vector<cv::Point> & minutiae_a, const std::vector<cv::Point> & minutiae_b) {
     const cv::Point ref_vec = minutiae_a[idx_a1] - minutiae_a[idx_a2], trans = minutiae_a[idx_a1] - minutiae_b[idx_b1];
 
     const cv::Point vec = minutiae_b[idx_b1] - minutiae_b[idx_b2];
@@ -63,14 +57,16 @@ double find_similarity(const int idx_a1, const int idx_a2, const int idx_b1, con
     const std::vector<cv::Point> & ref = minutiae_a;
     const std::vector<cv::Point2d> & mrk = rotated_minutiae_b;
 
+    double distance = pow(std::hypot((double) ref[idx_b2].x - mrk[idx_a2].x, (double) ref[idx_b2].y - mrk[idx_a2].y), 2.0);
+
     /* indicative of whether a given minutia was already used and how many are left */
-    bool marked[ref.size()];
-    int remaining = ref.size(), old_remaining = -1;
-    memset(marked, false, sizeof marked);
-    marked[idx_a1] = marked[idx_a2] = true;
-    std::vector<cv::Point> ref_found;
-    std::vector<cv::Point2d> mrk_found;
-    double distance = std::hypot(mrk[idx_a2].x - ref[idx_b2].x, mrk[idx_a2].y - ref[idx_b2].y);
+    bool ref_marked[ref.size()];
+    bool mrk_marked[mrk.size()];
+    int remaining = ref.size() - 2, old_remaining = -1;
+    memset(ref_marked, false, sizeof ref_marked);
+    memset(mrk_marked, false, sizeof mrk_marked);
+    ref_marked[idx_a1] = ref_marked[idx_a2] = true;
+    mrk_marked[idx_b1] = mrk_marked[idx_b2] = true;
 
     /* iteratively try and find unquestionable best matches */
     while (remaining != old_remaining) {
@@ -78,18 +74,14 @@ double find_similarity(const int idx_a1, const int idx_a2, const int idx_b1, con
         for (int i = 0, len = mrk.size(); i < len; i++) {
             /* if two minutiae, both unused, one in the markings and another in the reference,
             are reciprocally closest to each other, thats an unquestionable best match */
-            if (!marked[i]) {
-                cv::Point ith_best_match;
-                bool found;
-                std::tie(found, ith_best_match) = find_best_match<double, int>(mrk[i], ref, ref_found);
-                if (found) {
-                    /* add the match to the correspondences */
-                    ref_found.push_back(ith_best_match);
-                    mrk_found.push_back(mrk[i]);
-                    distance += std::hypot((double) mrk[i].x - ith_best_match.x, (double) mrk[i].y - ith_best_match.y);
-
+            if (!ref_marked[i]) {
+                int found = find_best_match<double, int>(mrk[i], ref, ref_marked);
+                if (found > 0 && find_best_match<int, double>(ref[found], mrk, mrk_marked) == i) {
                     /* mark the minutia as used */
-                    marked[i] = true;
+                    ref_marked[found] = true;
+                    mrk_marked[i] = true;
+
+                    distance += pow(std::hypot((double) ref[found].x - mrk[i].x, (double) ref[found].y - mrk[i].y), 2.0);
 
                     /* decrement the remaining minutiae */
                     remaining--;
@@ -98,21 +90,24 @@ double find_similarity(const int idx_a1, const int idx_a2, const int idx_b1, con
         }
     }
 
-    return distance;
+    return ref.size() - remaining;
 }
 
 /* finds the closest match between two minutiae coordinates */
-double afis::match(const std::vector<cv::Point> & minutiae_a, const std::vector<cv::Point> & minutiae_b) {
-    double similarity = std::numeric_limits<double>::max();
+// double afis::match(const std::vector<cv::Point> & minutiae_a, const std::vector<cv::Point> & minutiae_b) {
+int afis::match(const std::vector<cv::Point> & minutiae_a, const std::vector<cv::Point> & minutiae_b) {
+    // double similarity = std::numeric_limits<double>::max();
+    int matches = 0;
 
     const int len_b = minutiae_b.size();
     const int len_a = minutiae_a.size();
     for (int idx_a1 = 0; idx_a1 < len_a; idx_a1++)
-        for (int idx_a2 = 0; idx_a2 < len_a; idx_a2++) if (idx_a1 != idx_a2)
+        for (int idx_a2 = idx_a1 + 1; idx_a2 < len_a; idx_a2++)
             for (int idx_b1 = 0; idx_b1 < len_b; idx_b1++)
-                for (int idx_b2 = 0; idx_b1 < len_b; idx_b1++) if (idx_b1 != idx_b2)
-                    similarity = std::min(similarity, find_similarity(idx_a1, idx_a2, idx_b1, idx_b2, minutiae_a, minutiae_b));
+                for (int idx_b2 = idx_b1 + 1; idx_b1 < len_b; idx_b1++)
+                    // similarity = std::min(similarity, find_similarity(idx_a1, idx_a2, idx_b1, idx_b2, minutiae_a, minutiae_b));
+                    matches = std::max(matches, find_similarity(idx_a1, idx_a2, idx_b1, idx_b2, minutiae_a, minutiae_b));
 
-
-    return similarity;
+    // return similarity;
+    return matches;
 }

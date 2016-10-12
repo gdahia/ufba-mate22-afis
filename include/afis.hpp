@@ -31,5 +31,5 @@ namespace afis {
 
     void save_minutiae_markings(const std::vector<cv::Point> &, const cv::Mat &, const std::string &);
 
-    double match(const std::vector<cv::Point> &, const std::vector<cv::Point> &);
+    int match(const std::vector<cv::Point> &, const std::vector<cv::Point> &);
 }
