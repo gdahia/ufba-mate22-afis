@@ -10,8 +10,8 @@ int main(int argc, char ** argv) {
 
     std::vector<cv::Point> minutiae_a, minutiae_b;
 
-    afis::read_minutiae_coordinates(minutiae_a, "../digital/automatic/" + std::string(argv[1]) + ".txt");
-    afis::read_minutiae_coordinates(minutiae_b, "../digital/automatic/" + std::string(argv[2]) + ".txt");
+    afis::read_minutiae_coordinates(minutiae_a, "../digital/true/" + std::string(argv[1]) + ".txt");
+    afis::read_minutiae_coordinates(minutiae_b, "../digital/true/" + std::string(argv[2]) + ".txt");
 
     std::cout << afis::match(minutiae_a, minutiae_b) << std::endl;
 }

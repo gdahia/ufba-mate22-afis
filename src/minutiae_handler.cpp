@@ -18,7 +18,8 @@ void afis::read_minutiae_coordinates(std::vector<cv::Point> & minutiae, const st
     std::ifstream input(path, std::ios::in);
     if (input.is_open()) {
         int x, y;
-        while (input >> x >> y)
+        char t;
+        while (input >> x >> y >> t)
             minutiae.emplace_back(x, y);
     }
     else {
