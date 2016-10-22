@@ -46,17 +46,23 @@ int main(int argc, char ** argv) {
     while (input >> sub1 >> reg1 >> sub2 >> reg2 >> diff)
         diffs[sub1].emplace_back(diff, sub2);
 
-    unsigned int rank[51];
-    memset(rank, 0, sizeof rank);
+    /* compute ranks */
+    unsigned int ranks[51];
+    memset(ranks, 0, sizeof ranks);
 
-    /* store ranks */
     for (int i = 1; i <= 50; i++)
-        rank[nth_rank(diffs[i], i)]++;
+        ranks[nth_rank(diffs[i], i)]++;
 
-    /* output ranks */
-    int final_rank = 0;
+    for (int i = 2; i <= 50; i++)
+        ranks[i] += ranks[i - 1];
+
+    /* output ranks in R format and skip repetitions */
+    int last = 0;
     for (int i = 1; i <= 50; i++) {
-        final_rank += rank[i];
-        cout << final_rank << endl;
+        if (ranks[i] != last) {
+            last = ranks[i];
+            while (ranks[i]--)
+                cout << i << endl;
+        }
     }
 }
