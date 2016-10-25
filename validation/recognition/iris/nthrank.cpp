@@ -53,16 +53,10 @@ int main(int argc, char ** argv) {
     for (int i = 1; i <= 50; i++)
         ranks[nth_rank(diffs[i], i)]++;
 
-    for (int i = 2; i <= 50; i++)
-        ranks[i] += ranks[i - 1];
-
-    /* output ranks in R format and skip repetitions */
-    int last = 0;
+    /* output ranks */
+    int rank = 0;
     for (int i = 1; i <= 50; i++) {
-        if (ranks[i] != last) {
-            last = ranks[i];
-            while (ranks[i]--)
-                cout << i << endl;
-        }
+        rank += ranks[i];
+        cout << rank << endl;
     }
 }
