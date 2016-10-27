@@ -45,7 +45,6 @@ int main(int argc, char ** argv) {
     while (input >> sub1 >> reg1 >> sub2 >> reg2 >> sim)
         sims[sub1].emplace_back(sim, sub2);
 
-
     /* compute ranks */
     unsigned int ranks[51];
     memset(ranks, 0, sizeof ranks);
