@@ -40,17 +40,18 @@ int main(int argc, char ** argv) {
     }
 
     /* read contents and store accordingly */
-    vector<pair<int, int>> sims[51];
+    vector<pair<int, int>> sims[51][6];
     int sub1, reg1, sub2, reg2, sim;
     while (input >> sub1 >> reg1 >> sub2 >> reg2 >> sim)
-        sims[sub1].emplace_back(sim, sub2);
+        sims[sub1][reg1].emplace_back(sim, sub2);
 
     /* compute ranks */
     unsigned int ranks[51];
     memset(ranks, 0, sizeof ranks);
 
     for (int i = 1; i <= 50; i++)
-        ranks[nth_rank(sims[i], i)]++;
+        for (int j = 1; j <= 5; j++)
+            ranks[nth_rank(sims[i][j], i)]++;
 
     /* output ranks */
     int rank = 0;
