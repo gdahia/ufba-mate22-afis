@@ -18,4 +18,8 @@ par(new = TRUE)
 rank <- scan("iris/solo/nthrank.txt")
 plot(c(1:50), rank, type='l', pch=16, col="darkgreen", axes = FALSE, ann = FALSE, xaxs="i", yaxs="i", xlim = range(1:50), ylim = range(1:250))
 
+par(new = TRUE)
+rank <- scan("iris/and_fingerprint/nthrank.txt")
+plot(c(1:50), rank, type='l', pch=16, col="green", axes = FALSE, ann = FALSE, xaxs="i", yaxs="i", xlim = range(1:50), ylim = range(1:250))
+
 dev.off()
