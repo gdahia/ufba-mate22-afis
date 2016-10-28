@@ -6,7 +6,7 @@ plot(c(0:1.0), c(0:1.0), xlab = "FAR", ylab = "1 - FRR", type="n", xlim = range(
 grid(col = "lightgray", lty = "dotted", lwd = par("lwd"), equilogs = TRUE)
 par(new = TRUE)
 plot(c(0:1.0), c(0:1.0), xlab = "FAR", ylab = "1 - FRR", type="n", xlim = range(0:1), ylim = range(0:1.0), xaxs="i", yaxs="i")
-legend("bottomright", inset=.05, cex = 1, c("Impressão digital - detecção manual", "Impressão digital - detecção automática", "Iris - detecção manual", "Iris + Impressão digital - manual", "Aleatório"), lty=c(1,1,1,1,5), lwd=c(2,2,2,2,2), col=c("blue", "red", "darkgreen", "green", "black"), bg="grey96")
+legend("bottomright", inset=.05, cex = 0.85, c("Impressão digital - detecção manual", "Impressão digital - detecção automática", "Íris - detecção manual", "Íris + Impressão digital - Probabilístico", "Íris + Impressão digital - Ponderado", "Aleatório"), lty=c(1,1,1,1,1,5), lwd=c(2,2,2,2,2,2), col=c("blue", "red", "darkgreen", "purple", "green", "black"), bg="grey96")
 
 far <- scan("fingerprint/true/far.txt")
 frr <- scan("fingerprint/true/frr.txt")
@@ -23,8 +23,13 @@ frr <- scan("iris/solo/frr.txt")
 par(new = TRUE)
 plot(far, 1 - frr, col = "darkgreen", pch = 16, type = "l", xaxs = "i", yaxs = "i", axes = FALSE, ann = FALSE, xlim = range(0:1), ylim = range(0:1.0))
 
-far <- scan("iris/and_fingerprint/far.txt")
-frr <- scan("iris/and_fingerprint/frr.txt")
+far <- scan("multi/prob/far.txt")
+frr <- scan("multi/prob/frr.txt")
+par(new = TRUE)
+plot(far, 1 - frr, col = "purple", pch = 16, type = "l", xaxs = "i", yaxs = "i", axes = FALSE, ann = FALSE, xlim = range(0:1), ylim = range(0:1.0))
+
+far <- scan("multi/weighted/far.txt")
+frr <- scan("multi/weighted/frr.txt")
 par(new = TRUE)
 plot(far, 1 - frr, col = "green", pch = 16, type = "l", xaxs = "i", yaxs = "i", axes = FALSE, ann = FALSE, xlim = range(0:1), ylim = range(0:1.0))
 
